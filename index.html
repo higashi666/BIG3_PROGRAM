@@ -17,14 +17,32 @@
 </main>
 <script>
 'use strict';
-const KEY='big3_pana_100_v1';let state={max:{sq:100,bp:75,dl:100},weights:{},done:{},notes:{},week:1};try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)state={...state,...saved,max:{...state.max,...saved.max}}}catch(e){}
+const KEY='big3_pana_100_v2';let state={max:{sq:100,bp:75,dl:100},weights:{},done:{},notes:{},week:1};try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)state={...state,...saved,max:{...state.max,...saved.max}}}catch(e){}
+// One-time migration from the original day order.
+try {
+ if(!localStorage.getItem(KEY)) {
+  const prev=JSON.parse(localStorage.getItem('big3_pana_100_v1')||'null');
+  if(prev) {
+   state.max={...state.max,...(prev.max||{})};state.week=prev.week||1;
+   const move=k=>k.replace(/^(\d+)-(\d+)-([^ -]+)(.*)$/,(_,w,d,id,tail)=>{
+    const day=Number(d);
+    const next=day===0?(id.startsWith('sq')?1:0):day===1?(id.startsWith('dl')?0:1):day===2?3:2;
+    return `${w}-${next}-${id}${tail}`;
+   });
+   state.weights=Object.fromEntries(Object.entries(prev.weights||{}).map(([k,v])=>[move(k),v]));
+   state.done=Object.fromEntries(Object.entries(prev.done||{}).map(([k,v])=>[move(k),v]));
+   state.notes=Object.fromEntries(Object.entries(prev.notes||{}).map(([k,v])=>{const [w,d]=k.split('-');return [`${w}-${[1,0,3,2][Number(d)]}`,v]}));
+   localStorage.setItem(KEY,JSON.stringify(state));
+  }
+ }
+} catch(e) {}
 const names={sq:'Squat',bp:'Bench Press',dl:'Deadlift'};
 function entry(id,lift,sets,reps,pct,name){return{id,lift,sets,reps,pct,name:name||names[lift]}}
 const program={
-1:[{title:'DAY 1',sub:'VOLUME',rows:[entry('sqv','sq',3,5,74),entry('bpv','bp',3,5,74)]},{title:'DAY 2',sub:'TECHNIQUE / VOLUME',rows:[entry('dlv','dl',3,5,74),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,84,'Squat (Top Set)'),entry('sqb','sq',2,3,77,'Squat (Back-off)'),entry('bpt','bp',2,3,85,'Bench Press (Top Set)'),entry('bpb','bp',2,3,77,'Bench Press (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,85,'Deadlift (Top Set)'),entry('dlb','dl',2,3,77,'Deadlift (Back-off)')]}],
-2:[{title:'DAY 1',sub:'VOLUME',rows:[entry('sqv','sq',3,5,78),entry('bpv','bp',3,5,78)]},{title:'DAY 2',sub:'TECHNIQUE / VOLUME',rows:[entry('dlv','dl',3,5,78),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,87,'Squat (Top Set)'),entry('sqb','sq',2,3,79,'Squat (Back-off)'),entry('bpt','bp',2,3,87,'Bench Press (Top Set)'),entry('bpb','bp',2,3,79,'Bench Press (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,87,'Deadlift (Top Set)'),entry('dlb','dl',2,3,79,'Deadlift (Back-off)')]}],
-3:[{title:'DAY 1',sub:'VOLUME',rows:[entry('sqtop5','sq',1,5,82),entry('sqv','sq',2,5,78),entry('bptop5','bp',1,5,82),entry('bpv','bp',2,5,78)]},{title:'DAY 2',sub:'TECHNIQUE / VOLUME',rows:[entry('dltop5','dl',1,5,82),entry('dlv','dl',2,5,78),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,89,'Squat (Top Set)'),entry('sqb','sq',2,3,81,'Squat (Back-off)'),entry('bpt','bp',2,3,89,'Bench Press (Top Set)'),entry('bpb','bp',2,3,81,'Bench Press (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,89,'Deadlift (Top Set)'),entry('dlb','dl',2,3,81,'Deadlift (Back-off)')]}],
-4:[{title:'DAY 1',sub:'DELOAD',rows:[entry('sqv','sq',2,5,60),entry('bpv','bp',2,5,60)]},{title:'DAY 2',sub:'TECHNIQUE',rows:[entry('dlv','dl',2,5,60),entry('bpl','bp',2,5,60,'Bench Press (Optional)')]},{title:'DAY 3',sub:'DELOAD',rows:[entry('sqt','sq',2,5,65),entry('bpt','bp',2,5,65)]},{title:'DAY 4',sub:'DELOAD',rows:[entry('dlt','dl',2,5,65)]}]};
+1:[{title:'DAY 1',sub:'TECHNIQUE / VOLUME',rows:[entry('dlv','dl',3,5,74),entry('bpv','bp',3,5,74)]},{title:'DAY 2',sub:'VOLUME',rows:[entry('sqv','sq',3,5,74),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,85,'Deadlift (Top Set)'),entry('dlb','dl',2,3,77,'Deadlift (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,84,'Squat (Top Set)'),entry('sqb','sq',2,3,77,'Squat (Back-off)'),entry('bpt','bp',2,3,85,'Bench Press (Top Set)'),entry('bpb','bp',2,3,77,'Bench Press (Back-off)')]}],
+2:[{title:'DAY 1',sub:'TECHNIQUE / VOLUME',rows:[entry('dlv','dl',3,5,78),entry('bpv','bp',3,5,78)]},{title:'DAY 2',sub:'VOLUME',rows:[entry('sqv','sq',3,5,78),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,87,'Deadlift (Top Set)'),entry('dlb','dl',2,3,79,'Deadlift (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,87,'Squat (Top Set)'),entry('sqb','sq',2,3,79,'Squat (Back-off)'),entry('bpt','bp',2,3,87,'Bench Press (Top Set)'),entry('bpb','bp',2,3,79,'Bench Press (Back-off)')]}],
+3:[{title:'DAY 1',sub:'TECHNIQUE / VOLUME',rows:[entry('dltop5','dl',1,5,82),entry('dlv','dl',2,5,78),entry('bptop5','bp',1,5,82),entry('bpv','bp',2,5,78)]},{title:'DAY 2',sub:'VOLUME',rows:[entry('sqtop5','sq',1,5,82),entry('sqv','sq',2,5,78),entry('bpl','bp',3,7,60,'Bench Press (Light)')]},{title:'DAY 3',sub:'STRENGTH',rows:[entry('dlt','dl',2,3,89,'Deadlift (Top Set)'),entry('dlb','dl',2,3,81,'Deadlift (Back-off)')]},{title:'DAY 4',sub:'STRENGTH',rows:[entry('sqt','sq',2,3,89,'Squat (Top Set)'),entry('sqb','sq',2,3,81,'Squat (Back-off)'),entry('bpt','bp',2,3,89,'Bench Press (Top Set)'),entry('bpb','bp',2,3,81,'Bench Press (Back-off)')]}],
+4:[{title:'DAY 1',sub:'TECHNIQUE',rows:[entry('dlv','dl',2,5,60),entry('bpv','bp',2,5,60)]},{title:'DAY 2',sub:'DELOAD',rows:[entry('sqv','sq',2,5,60),entry('bpl','bp',2,5,60,'Bench Press (Optional)')]},{title:'DAY 3',sub:'DELOAD',rows:[entry('dlt','dl',2,5,65)]},{title:'DAY 4',sub:'DELOAD',rows:[entry('sqt','sq',2,5,65),entry('bpt','bp',2,5,65)]}]};
 const titles={1:'W1',2:'W2',3:'W3',4:'W4 / DELOAD'};
 const summaries={1:'',2:'',3:'',4:''};
 const round25=n=>Math.round(n/2.5)*2.5;
